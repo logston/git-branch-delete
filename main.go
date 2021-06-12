@@ -56,6 +56,10 @@ func main() {
 			os.Exit(1)
 		}
 
+		if err := rebaseBranch(currentBranch); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 
 	if err := checkoutBranch(currentBranch); err != nil {
@@ -91,7 +95,12 @@ func checkoutBranch(branch string) error {
 	return cmd.Run()
 }
 
-func rebaseBranch(baseBranch, branch string) error {
-	cmd := exec.Command("git", "checkout", branch)
-	return cmd.Run()
+func rebaseBranch(baseBranch string) error {
+	cmd := exec.Command("git", "rebase", baseBranch)
+	stdOE, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+	fmt.Println(stdOE)
+	return nil
 }
