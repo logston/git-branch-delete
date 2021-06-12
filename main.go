@@ -18,8 +18,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Running for %s...\n", wd)
-
 	file, err := os.Open(path.Join(wd, ".git", "HEAD"))
 	if errors.Is(err, os.ErrNotExist) {
 		fmt.Println("Not at root of repository.")
@@ -39,7 +37,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Current branch", currentBranch)
+	fmt.Println("Rebasing branches onto: ", currentBranch)
 
 	files, err := os.ReadDir(path.Join(wd, ".git", "refs", "heads"))
 	if err != nil {
