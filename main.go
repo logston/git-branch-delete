@@ -55,6 +55,7 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+<<<<<<< HEAD
 
 	}
 
@@ -62,6 +63,11 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+=======
+	}
+
+	// rebase on master
+>>>>>>> Attempt checking out each branch
 
 	// If any issues, abort
 	// If no issues,
@@ -85,6 +91,7 @@ func parseRefForBranch(ref string) (string, error) {
 
 	return branch, nil
 }
+<<<<<<< HEAD
 
 func checkoutBranch(branch string) error {
 	cmd := exec.Command("git", "checkout", branch)
@@ -93,5 +100,10 @@ func checkoutBranch(branch string) error {
 
 func rebaseBranch(baseBranch, branch string) error {
 	cmd := exec.Command("git", "rebase", branch)
+=======
+
+func checkoutBranch(branch string) error {
+	cmd := exec.Command("git", "checkout", branch)
+>>>>>>> Attempt checking out each branch
 	return cmd.Run()
 }
