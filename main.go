@@ -32,13 +32,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	currentBranch, err := parseRefForBranch(string(data))
+	baseBranch, err := parseRefForBranch(string(data))
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	fmt.Println("Rebasing branches onto:", currentBranch)
+	fmt.Println("Rebasing branches onto:", baseBranch)
 
 	files, err := os.ReadDir(path.Join(wd, ".git", "refs", "heads"))
 	if err != nil {
@@ -50,44 +50,49 @@ func main() {
 	for _, file := range files {
 		branch := file.Name()
 
-		if branch == currentBranch {
+		if branch == baseBranch {
 			continue
 		}
 
-		fmt.Printf("Checking %s", branch)
+		fmt.Printf("Checking '%s' ... ", branch)
 
 		if err := checkoutBranch(branch); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		success, err := rebaseBranch(currentBranch, branch)
+		success, err := rebaseBranch(baseBranch, branch)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
 		if success {
-			if err := checkoutBranch(currentBranch); err != nil {
+			if err := checkoutBranch(baseBranch); err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
-			hasContent, err := diffBranch(currentBranch, branch)
+			hasContent, err := diffBranch(baseBranch, branch)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			if !hasContent {
+			if hasContent {
+				fmt.Printf("branch has content. Moving on.\n")
+			} else {
+				fmt.Printf("branch has no content. Deleting.\n")
 				if err := deleteBranch(branch); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
 				}
 			}
+		} else {
+			fmt.Printf("unable to rebase branch. Moving on.\n")
 		}
 	}
 
-	if err := checkoutBranch(currentBranch); err != nil {
+	if err := checkoutBranch(baseBranch); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -121,7 +126,6 @@ func rebaseBranch(baseBranch, branch string) (bool, error) {
 	// use a hack to test if branch failed to rebase...
 	stdOE, cmdErr := cmd.CombinedOutput()
 	if strings.Contains(string(stdOE), "CONFLICT") && strings.Contains(string(stdOE), "abort") {
-		fmt.Printf("Unable to rebase %s. Rolling back...\n", branch)
 		if err := exec.Command("git", "rebase", "--abort").Run(); err != nil {
 			return false, err
 		}
