@@ -92,6 +92,6 @@ func checkoutBranch(branch string) error {
 }
 
 func rebaseBranch(baseBranch, branch string) error {
-	cmd := exec.Command("git", "checkout", branch)
+	cmd := exec.Command("git", "rebase", branch)
 	return cmd.Run()
 }
