@@ -100,6 +100,9 @@ func checkoutBranch(branch string) error {
 
 func rebaseBranch(baseBranch string) error {
 	cmd := exec.Command("git", "rebase", baseBranch)
+	// test
+
+	// This is it
 	stdOE, err := cmd.CombinedOutput()
 	fmt.Println(string(stdOE))
 	if err != nil {
