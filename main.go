@@ -92,15 +92,20 @@ func parseRefForBranch(ref string) (string, error) {
 
 func checkoutBranch(branch string) error {
 	cmd := exec.Command("git", "checkout", branch)
-	return cmd.Run()
+	stdOE, err := cmd.CombinedOutput()
+	fmt.Println(string(stdOE))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func rebaseBranch(baseBranch string) error {
 	cmd := exec.Command("git", "rebase", baseBranch)
 	stdOE, err := cmd.CombinedOutput()
+	fmt.Println(string(stdOE))
 	if err != nil {
 		return err
 	}
-	fmt.Println(stdOE)
 	return nil
 }
