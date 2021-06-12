@@ -38,7 +38,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Rebasing branches onto: ", currentBranch)
+	fmt.Println("Rebasing branches onto:", currentBranch)
 
 	files, err := os.ReadDir(path.Join(wd, ".git", "refs", "heads"))
 	if err != nil {
@@ -49,7 +49,13 @@ func main() {
 	// checkout each branch
 	for _, file := range files {
 		branch := file.Name()
-		fmt.Println(branch)
+
+		if branch == currentBranch {
+			continue
+		}
+
+		fmt.Printf("Checking %s", branch)
+
 		if err := checkoutBranch(branch); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -72,10 +78,7 @@ func main() {
 				fmt.Println(err)
 				os.Exit(1)
 			}
-			if hasContent {
-				fmt.Printf("Branch %s has content. Will not delete.\n", branch)
-			} else {
-				fmt.Printf("Branch %s has no content. Will delete.\n", branch)
+			if !hasContent {
 				if err := deleteBranch(branch); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -108,13 +111,7 @@ func parseRefForBranch(ref string) (string, error) {
 }
 
 func checkoutBranch(branch string) error {
-	cmd := exec.Command("git", "checkout", branch)
-	stdOE, err := cmd.CombinedOutput()
-	fmt.Println(string(stdOE))
-	if err != nil {
-		return err
-	}
-	return nil
+	return exec.Command("git", "checkout", branch).Run()
 }
 
 func rebaseBranch(baseBranch, branch string) (bool, error) {
