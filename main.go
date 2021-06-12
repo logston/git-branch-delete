@@ -55,19 +55,17 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-<<<<<<< HEAD
 
+		if err := rebaseBranch(currentBranch); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 
 	if err := checkoutBranch(currentBranch); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-=======
-	}
-
-	// rebase on master
->>>>>>> Attempt checking out each branch
 
 	// If any issues, abort
 	// If no issues,
@@ -91,19 +89,23 @@ func parseRefForBranch(ref string) (string, error) {
 
 	return branch, nil
 }
-<<<<<<< HEAD
 
 func checkoutBranch(branch string) error {
 	cmd := exec.Command("git", "checkout", branch)
-	return cmd.Run()
+	stdOE, err := cmd.CombinedOutput()
+	fmt.Println(stdOE)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func rebaseBranch(baseBranch, branch string) error {
-	cmd := exec.Command("git", "rebase", branch)
-=======
-
-func checkoutBranch(branch string) error {
-	cmd := exec.Command("git", "checkout", branch)
->>>>>>> Attempt checking out each branch
-	return cmd.Run()
+func rebaseBranch(baseBranch string) error {
+	cmd := exec.Command("git", "rebase", baseBranch)
+	stdOE, err := cmd.CombinedOutput()
+	fmt.Println(stdOE)
+	if err != nil {
+		return err
+	}
+	return nil
 }
