@@ -55,9 +55,32 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := rebaseBranch(currentBranch, branch); err != nil {
+		success, err := rebaseBranch(currentBranch, branch)
+		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
+		}
+
+		if success {
+			if err := checkoutBranch(currentBranch); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			hasContent, err := diffBranch(currentBranch, branch)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			if hasContent {
+				fmt.Printf("Branch %s has content. Will not delete.\n", branch)
+			} else {
+				fmt.Printf("Branch %s has no content. Will delete.\n", branch)
+				if err := deleteBranch(branch); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+			}
 		}
 	}
 
@@ -65,11 +88,6 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
-	// If any issues, abort
-	// If no issues,
-	//    If nothing there, great delete branch
-	//    If soemthing there, leave it be.
 }
 
 func parseRefForBranch(ref string) (string, error) {
@@ -99,22 +117,40 @@ func checkoutBranch(branch string) error {
 	return nil
 }
 
-func rebaseBranch(baseBranch, branch string) error {
+func rebaseBranch(baseBranch, branch string) (bool, error) {
 	cmd := exec.Command("git", "rebase", baseBranch)
-	// test
 
-	// This is it
-	stdOE, _ := cmd.CombinedOutput()
-
-	// There are no platform indepenent ways to determine exit code. Thus we
+	// There are no platform independent ways to determine exit code. Thus we
 	// use a hack to test if branch failed to rebase...
+	stdOE, cmdErr := cmd.CombinedOutput()
 	if strings.Contains(string(stdOE), "CONFLICT") && strings.Contains(string(stdOE), "abort") {
-		fmt.Println(">>>", string(stdOE), "<<<")
 		fmt.Printf("Unable to rebase %s. Rolling back...\n", branch)
 		if err := exec.Command("git", "rebase", "--abort").Run(); err != nil {
-			return err
+			return false, err
 		}
+	} else if cmdErr != nil {
+		return false, cmdErr
 	}
 
+	return true, nil
+}
+
+func diffBranch(baseBranch, branch string) (bool, error) {
+	cmd := exec.Command("git", "diff", baseBranch, branch)
+
+	stdOE, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, err
+	}
+
+	if len(stdOE) != 0 {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func deleteBranch(branch string) error {
+	fmt.Println("deleted branch")
 	return nil
 }
