@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"strings"
 )
 
 var headReFormat = regexp.MustCompile(`ref: refs/heads/(?P<branch>.*)`)
@@ -54,7 +55,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := rebaseBranch(currentBranch); err != nil {
+		if err := rebaseBranch(currentBranch, branch); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
@@ -98,15 +99,22 @@ func checkoutBranch(branch string) error {
 	return nil
 }
 
-func rebaseBranch(baseBranch string) error {
+func rebaseBranch(baseBranch, branch string) error {
 	cmd := exec.Command("git", "rebase", baseBranch)
 	// test
 
 	// This is it
-	stdOE, err := cmd.CombinedOutput()
-	fmt.Println(string(stdOE))
-	if err != nil {
-		return err
+	stdOE, _ := cmd.CombinedOutput()
+
+	// There are no platform indepenent ways to determine exit code. Thus we
+	// use a hack to test if branch failed to rebase...
+	if strings.Contains(string(stdOE), "CONFLICT") && strings.Contains(string(stdOE), "abort") {
+		fmt.Println(">>>", string(stdOE), "<<<")
+		fmt.Printf("Unable to rebase %s. Rolling back...\n", branch)
+		if err := exec.Command("git", "rebase", "--abort").Run(); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
