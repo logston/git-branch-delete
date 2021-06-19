@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -40,7 +41,7 @@ func main() {
 
 	fmt.Println("Rebasing branches onto:", baseBranch)
 
-	files, err := os.ReadDir(path.Join(wd, ".git", "refs", "heads"))
+	files, err := ioutil.ReadDir(path.Join(wd, ".git", "refs", "heads"))
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
