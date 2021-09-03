@@ -79,10 +79,11 @@ func main() {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+
 			if hasContent {
 				fmt.Printf("branch has content. Moving on.\n")
 			} else {
-				fmt.Printf("branch has no content. Deleting.\n")
+				fmt.Printf("branch has no content. Deleting...")
 				if err := deleteBranch(branch); err != nil {
 					fmt.Println(err)
 					os.Exit(1)
@@ -153,6 +154,9 @@ func diffBranch(baseBranch, branch string) (bool, error) {
 }
 
 func deleteBranch(branch string) error {
-	fmt.Println("deleted branch")
+	if err := exec.Command("git", "branch", "-D", branch).Run(); err != nil {
+		return err
+	}
+	fmt.Printf("done.\n")
 	return nil
 }
