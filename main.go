@@ -126,13 +126,17 @@ func rebaseBranch(baseBranch, branch string) (bool, error) {
 
 	// There are no platform independent ways to determine exit code. Thus we
 	// use a hack to test if branch failed to rebase...
-	stdOE, cmdErr := cmd.CombinedOutput()
+	stdOE, err := cmd.CombinedOutput()
+	// First check if error was due to a rebase conflict.
 	if strings.Contains(string(stdOE), "CONFLICT") && strings.Contains(string(stdOE), "abort") {
 		if err := exec.Command("git", "rebase", "--abort").Run(); err != nil {
 			return false, err
 		}
-	} else if cmdErr != nil {
-		return false, cmdErr
+		return false, nil
+	}
+	// If a non-rebase conflict error found, return error.
+	if err != nil {
+		return false, err
 	}
 
 	return true, nil
