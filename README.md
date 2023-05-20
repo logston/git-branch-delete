@@ -10,7 +10,7 @@ rebased on the updated `main` branch will not be pruned.
 ## Installation
 
 ```
-go get github.com/logston/git-branch-delete
+go install github.com/logston/git-branch-delete@latest
 ```
 
 ## Usage
