@@ -39,31 +39,33 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Rebasing branches onto:", baseBranch)
-
-	files, err := ioutil.ReadDir(path.Join(wd, ".git", "refs", "heads"))
+	root := []string{wd, ".git", "refs", "heads"}
+	branches, err := getBranches(root, []string{})
 	if err != nil {
+		fmt.Println("Unable to get branches")
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	// checkout each branch
-	for _, file := range files {
-		branch := file.Name()
+	fmt.Println("Rebasing branches onto:", baseBranch)
 
+	// checkout each branch
+	for _, branch := range branches {
 		if branch == baseBranch {
 			continue
 		}
 
-		fmt.Printf("Checking '%s' ... ", branch)
+		fmt.Printf("Checking out '%s' ... ", branch)
 
 		if err := checkoutBranch(branch); err != nil {
+			fmt.Println("Could not checkout branch.")
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
 		success, err := rebaseBranch(baseBranch, branch)
 		if err != nil {
+			fmt.Println("Could not rebase branch due to error.")
 			fmt.Println(err)
 			os.Exit(1)
 		}
@@ -128,7 +130,7 @@ func rebaseBranch(baseBranch, branch string) (bool, error) {
 	// use a hack to test if branch failed to rebase...
 	stdOE, err := cmd.CombinedOutput()
 	// First check if error was due to a rebase conflict.
-	if strings.Contains(string(stdOE), "CONFLICT") && strings.Contains(string(stdOE), "abort") {
+	if mustAbort(string(stdOE)) {
 		if err := exec.Command("git", "rebase", "--abort").Run(); err != nil {
 			return false, err
 		}
@@ -140,6 +142,22 @@ func rebaseBranch(baseBranch, branch string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func mustAbort(stdoe string) bool {
+	if strings.Contains(stdoe, "CONFLICT") && strings.Contains(stdoe, "abort") {
+		return true
+	}
+
+	if strings.Contains(stdoe, "all conflicts fixed") {
+		return true
+	}
+
+	if strings.Contains(stdoe, "failed to write commit object") {
+		return true
+	}
+
+	return false
 }
 
 func diffBranch(baseBranch, branch string) (bool, error) {
@@ -163,4 +181,28 @@ func deleteBranch(branch string) error {
 	}
 	fmt.Printf("done.\n")
 	return nil
+}
+
+func getBranches(root, parents []string) ([]string, error) {
+	fsInfos, err := ioutil.ReadDir(path.Join(append(root, parents...)...))
+	if err != nil {
+		return nil, err
+	}
+
+	heads := []string{}
+	for _, fsInfo := range fsInfos {
+		name := fsInfo.Name()
+		if fsInfo.IsDir() {
+			subHeads, err := getBranches(root, append(parents, name))
+			if err != nil {
+				return nil, err
+			}
+			heads = append(heads, subHeads...)
+		} else {
+			fullPath := path.Join(append(parents, name)...)
+			heads = append(heads, fullPath)
+		}
+	}
+
+	return heads, nil
 }
