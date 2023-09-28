@@ -1,6 +1,9 @@
 build:
 	go build
 
+install: build
+	cp ./git-branch-delete $(GOPATH)/bin
+
 test/diff: build
 	tar -xvzf testdata/diff.tgz
 	cd diff && ../git-branch-delete
